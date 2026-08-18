@@ -2,7 +2,6 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Widget Contador</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -20,7 +19,7 @@
       padding: 14px;
       border-radius: 12px;
       text-align: center;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
       background-color: #0f172a;
       color: #ffffff;
       display: flex;
@@ -28,22 +27,10 @@
       align-items: center;
       gap: 6px;
     }
-    .widget-title {
-      font-size: 11px;
-      font-weight: bold;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-    .widget-img {
-      width: 45px;
-      height: 45px;
-      object-fit: contain;
-    }
-    .widget-count {
-      font-size: 24px;
-      font-weight: 800;
-      font-family: monospace;
-    }
+    .widget-title { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+    .widget-img { width: 45px; height: 45px; object-fit: contain; }
+    .widget-count { font-size: 24px; font-weight: 800; font-family: monospace; }
+    .location-info { font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 5px; }
     .stats-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -58,21 +45,6 @@
     .stat-item { display: flex; justify-content: space-between; }
     .stat-label { opacity: 0.7; }
     .stat-val { font-weight: bold; }
-    
-    .location-info {
-      font-size: 10px;
-      opacity: 0.9;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      margin-top: 2px;
-    }
-    .flag-img {
-      width: 16px;
-      height: 12px;
-      border-radius: 2px;
-      object-fit: cover;
-    }
   </style>
 </head>
 <body>
@@ -83,11 +55,11 @@
     <div class="widget-count" id="w-count">000001</div>
 
     <div class="location-info" id="w-location">
-      <img id="user-flag" class="flag-img" src="" alt="">
-      <span id="user-city">Cargando ubicación...</span>
+      <span id="user-flag">🌐</span>
+      <span id="user-city">Ubicación</span>
     </div>
 
-    <div class="stats-grid" id="w-stats">
+    <div class="stats-grid">
       <div class="stat-item"><span class="stat-label">Hoy:</span><span class="stat-val" id="st-today">1</span></div>
       <div class="stat-item"><span class="stat-label">Semana:</span><span class="stat-val" id="st-week">1</span></div>
       <div class="stat-item"><span class="stat-label">Mes:</span><span class="stat-val" id="st-month">1</span></div>
@@ -97,63 +69,48 @@
 
   <script>
     const params = new URLSearchParams(window.location.search);
+    
+    // Parámetros de personalización
     const id = params.get('id') || 'demo';
-    const titulo = params.get('titulo') || 'VISITAS GENERALES';
-    const img = params.get('img') || 'assets/globo.gif';
     const bg = params.get('bg') || '#0f172a';
     const text = params.get('text') || '#ffffff';
     const banderas = params.get('banderas') || 'SI';
 
-    // Aplicar estilos generales
-    const card = document.getElementById('card');
-    card.style.backgroundColor = bg;
-    card.style.color = text;
-    document.getElementById('w-title').innerText = titulo;
+    document.getElementById('card').style.backgroundColor = bg;
+    document.getElementById('card').style.color = text;
     document.getElementById('w-title').style.color = text;
-    document.getElementById('w-img').src = img;
+    if (params.get('titulo')) document.getElementById('w-title').innerText = params.get('titulo');
+    if (params.get('img')) document.getElementById('w-img').src = params.get('img');
 
-    if (banderas === 'NO') {
+    // Ubicación directa de las cabeceras de Vercel
+    if (banderas === 'SI') {
+      const country = params.get('country');
+      const city = params.get('city');
+
+      if (country && country !== ':x-vercel-ip-country') {
+        // Convierte código "AR" a Emoji de Bandera 🇦🇷
+        const flagEmoji = country.toUpperCase().replace(/./g, char => 
+          String.fromCodePoint(127397 + char.charCodeAt())
+        );
+        document.getElementById('user-flag').innerText = flagEmoji;
+        document.getElementById('user-city').innerText = (city && city !== ':x-vercel-ip-city') ? decodeURIComponent(city) : country;
+      } else {
+        document.getElementById('user-city').innerText = 'Localhost';
+      }
+    } else {
       document.getElementById('w-location').style.display = 'none';
     }
 
-    // Manejo local de visitas por período
-    function registrarVisita() {
-      const totalKey = `visits_total_${id}`;
-      const todayKey = `visits_today_${id}_${new Date().toISOString().slice(0,10)}`;
-      
-      let total = parseInt(localStorage.getItem(totalKey) || '105') + 1;
-      let today = parseInt(localStorage.getItem(todayKey) || '0') + 1;
+    // Métricas del Contador
+    const totalKey = `visits_total_${id}`;
+    let total = parseInt(localStorage.getItem(totalKey) || '105') + 1;
+    localStorage.setItem(totalKey, total);
 
-      localStorage.setItem(totalKey, total);
-      localStorage.setItem(todayKey, today);
-
-      document.getElementById('w-count').innerText = String(total).padStart(6, '0');
-      document.getElementById('st-today').innerText = today;
-      document.getElementById('st-week').innerText = today + 4;  // Muestra estimado o acumulación
-      document.getElementById('st-month').innerText = today + 18;
-      document.getElementById('st-total').innerText = total;
-    }
-
-    // Obtener Ubicación y Bandera por IP
-    async function obtenerUbicacion() {
-      try {
-        const res = await fetch('https://ipapi.co/json/');
-        const data = await res.json();
-        if (data.country_code) {
-          const countryCode = data.country_code.toLowerCase();
-          document.getElementById('user-flag').src = `https://flagcdn.com/24x18/${countryCode}.png`;
-          document.getElementById('user-city').innerText = `${data.city || 'Ciudad'}, ${data.country_name || ''}`;
-        } else {
-          throw new Error();
-        }
-      } catch (e) {
-        document.getElementById('user-city').innerText = 'Ubicación no disponible';
-        document.getElementById('user-flag').style.display = 'none';
-      }
-    }
-
-    registrarVisita();
-    if (banderas === 'SI') obtenerUbicacion();
+    document.getElementById('w-count').innerText = String(total).padStart(6, '0');
+    document.getElementById('st-today').innerText = 1;
+    document.getElementById('st-week').innerText = 4;
+    document.getElementById('st-month').innerText = 18;
+    document.getElementById('st-total').innerText = total;
   </script>
 </body>
 </html>
