@@ -4,15 +4,16 @@
   <meta charset="UTF-8">
   <title>Panel Creador de Widgets</title>
   <style>
-    body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; padding: 25px; display: flex; gap: 30px; justify-content: center; }
-    .panel { background: white; padding: 24px; border-radius: 12px; width: 380px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8fafc; padding: 25px; display: flex; gap: 30px; justify-content: center; }
+    .panel { background: white; padding: 24px; border-radius: 12px; width: 390px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
     h2 { font-size: 18px; color: #1e293b; margin-bottom: 16px; }
-    label { display: block; margin-top: 12px; font-weight: 600; font-size: 12px; color: #475569; text-transform: uppercase; }
-    input[type="text"], select { width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
-    .color-picker { display: flex; gap: 10px; margin-top: 4px; }
-    .color-picker input { height: 38px; cursor: pointer; flex: 1; }
-    textarea { width: 100%; height: 90px; margin-top: 8px; font-family: monospace; font-size: 12px; padding: 8px; box-sizing: border-box; border: 1px solid #cbd5e1; border-radius: 6px; }
-    button { margin-top: 18px; width: 100%; padding: 12px; background: #0284c7; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    label { display: block; margin-top: 12px; font-weight: 600; font-size: 11px; color: #475569; text-transform: uppercase; }
+    input[type="text"], select { width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 13px; }
+    .color-row { display: flex; gap: 10px; }
+    .color-group { flex: 1; }
+    input[type="color"] { width: 100%; height: 38px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; margin-top: 4px; padding: 2px; }
+    textarea { width: 100%; height: 80px; margin-top: 8px; font-family: monospace; font-size: 11px; padding: 8px; box-sizing: border-box; border: 1px solid #cbd5e1; border-radius: 6px; }
+    button { margin-top: 18px; width: 100%; padding: 12px; background: #0284c7; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
     button:hover { background: #0369a1; }
     .preview-box { background: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; text-align: center; }
   </style>
@@ -25,10 +26,38 @@
     <label>ID del Cliente (sin espacios):</label>
     <input type="text" id="inp-id" value="cliente1" placeholder="ej: taller_juan">
     
-    <label>URL de GitHub Pages del Proyecto:</label>
-    <input type="text" id="inp-gh" placeholder="https://tu-usuario.github.io/contador">
+    <label>Título del Widget:</label>
+    <input type="text" id="inp-titulo" value="VISITAS GENERALES">
 
-    <button onclick="generarCodigo()">Generar iFrame</button>
+    <label>Imagen / GIF de la carpeta Assets:</label>
+    <select id="sel-gif" onchange="evaluarOpcionGif(this.value)">
+      <option value="">Cargando imágenes de /assets...</option>
+    </select>
+
+    <label id="lbl-custom" style="display:none;">URL Personalizada Externa:</label>
+    <input type="text" id="inp-custom-gif" style="display:none;" placeholder="https://.../imagen.gif">
+
+    <div class="color-row">
+      <div class="color-group">
+        <label>Fondo:</label>
+        <input type="color" id="inp-bg" value="#0f172a">
+      </div>
+      <div class="color-group">
+        <label>Texto:</label>
+        <input type="color" id="inp-text" value="#ffffff">
+      </div>
+    </div>
+
+    <label>Mostrar Banderas de Visitantes:</label>
+    <select id="inp-banderas">
+      <option value="SÍ">SÍ</option>
+      <option value="NO">NO</option>
+    </select>
+
+    <label>URL de GitHub Pages:</label>
+    <input type="text" id="inp-gh" value="https://saultula.github.io/contador/" onchange="cargarImagenesAssets()">
+
+    <button onclick="guardarYGenerar()">Guardar y Generar iFrame</button>
 
     <label>Código iFrame para el Cliente:</label>
     <textarea id="out-code" readonly placeholder="El código aparecerá aquí..."></textarea>
@@ -37,13 +66,86 @@
   <div class="preview-box">
     <h2>Vista Previa</h2>
     <div id="preview-container">
-      <p style="color:#94a3b8; font-size:13px; margin-top: 40px;">Ingresá la URL de GitHub Pages y tocá en "Generar iFrame" para previsualizar.</p>
+      <p style="color:#94a3b8; font-size:13px; margin-top: 40px;">Completá los datos y tocá en "Guardar y Generar iFrame".</p>
     </div>
   </div>
 
   <script>
-    function generarCodigo() {
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyVvN3AlbRYguoTGWbyvUok7Ig9NQoxbIvVYHogMPcTo-0z2--Qlc1zkEnO-xHVongA/exec";
+
+    // Función para obtener dinámicamente las imágenes de /assets vía API de GitHub
+    function cargarImagenesAssets() {
+      const ghUrl = document.getElementById('inp-gh').value.trim();
+      const select = document.getElementById('sel-gif');
+
+      // Extraer usuario y repositorio desde la URL de GitHub Pages
+      const match = ghUrl.match(/https?:\/\/([^.]+)\.github\.io\/([^\/]+)/);
+      if (!match) {
+        select.innerHTML = '<option value="custom">-- Usar URL personalizada --</option>';
+        evaluarOpcionGif('custom');
+        return;
+      }
+
+      const user = match[1];
+      const repo = match[2];
+      const apiUrl = `https://api.github.com/repos/${user}/${repo}/contents/assets`;
+
+      fetch(apiUrl)
+        .then(res => res.json())
+        .then(files => {
+          select.innerHTML = '';
+          if (Array.isArray(files)) {
+            // Filtrar solo formatos de imagen
+            const imagenes = files.filter(f => f.name.match(/\.(gif|png|jpe?g|svg|webp)$/i));
+            
+            imagenes.forEach(img => {
+              const fileUrl = `${ghUrl.endsWith('/') ? ghUrl : ghUrl + '/'}assets/${img.name}`;
+              const opt = document.createElement('option');
+              opt.value = fileUrl;
+              opt.innerText = `assets/${img.name}`;
+              select.appendChild(opt);
+            });
+          }
+          
+          // Añadir opción para pegar URL externa por si acaso
+          const optCustom = document.createElement('option');
+          optCustom.value = 'custom';
+          optCustom.innerText = '-- Pegar URL externa --';
+          select.appendChild(optCustom);
+
+          evaluarOpcionGif(select.value);
+        })
+        .catch(() => {
+          select.innerHTML = '<option value="custom">-- Usar URL personalizada --</option>';
+          evaluarOpcionGif('custom');
+        });
+    }
+
+    function evaluarOpcionGif(val) {
+      const customLbl = document.getElementById('lbl-custom');
+      const customInp = document.getElementById('inp-custom-gif');
+      if (val === 'custom') {
+        customLbl.style.display = 'block';
+        customInp.style.display = 'block';
+      } else {
+        customLbl.style.display = 'none';
+        customInp.style.display = 'none';
+      }
+    }
+
+    function guardarYGenerar() {
       const id = document.getElementById('inp-id').value.trim();
+      const titulo = document.getElementById('inp-titulo').value.trim();
+      
+      const selGif = document.getElementById('sel-gif').value;
+      let gifUrl = selGif;
+      if (selGif === 'custom') {
+        gifUrl = document.getElementById('inp-custom-gif').value.trim();
+      }
+
+      const bgColor = document.getElementById('inp-bg').value;
+      const textColor = document.getElementById('inp-text').value;
+      const banderas = document.getElementById('inp-banderas').value;
       let ghUrl = document.getElementById('inp-gh').value.trim();
       
       if (!ghUrl || !id) {
@@ -53,12 +155,25 @@
 
       if (ghUrl.endsWith('/')) ghUrl = ghUrl.slice(0, -1);
 
-      const widgetUrl = `${ghUrl}/widget.html?id=${encodeURIComponent(id)}`;
-      const iframeCode = `<iframe src="${widgetUrl}" width="240" height="270" frameborder="0" scrolling="no" style="border:none; overflow:hidden;"></iframe>`;
-      
-      document.getElementById('out-code').value = iframeCode;
-      document.getElementById('preview-container').innerHTML = iframeCode;
+      const configObj = {
+        bg_color: bgColor,
+        text_color: textColor
+      };
+
+      fetch(`${APPS_SCRIPT_URL}?action=guardar_config&id=${encodeURIComponent(id)}&titulo=${encodeURIComponent(titulo)}&elemento_visual=${encodeURIComponent(gifUrl)}&mostrar_banderas=${encodeURIComponent(banderas)}&config=${encodeURIComponent(JSON.stringify(configObj))}`)
+        .then(res => res.json())
+        .then(() => {
+          const widgetUrl = `${ghUrl}/widget.html?id=${encodeURIComponent(id)}&t=${Date.now()}`;
+          const iframeCode = `<iframe src="${widgetUrl}" width="240" height="270" frameborder="0" scrolling="no" style="border:none; overflow:hidden;"></iframe>`;
+          
+          document.getElementById('out-code').value = iframeCode;
+          document.getElementById('preview-container').innerHTML = iframeCode;
+        })
+        .catch(err => alert("Error al guardar la configuración: " + err));
     }
+
+    // Cargar la lista de imágenes apenas abre la página
+    window.onload = cargarImagenesAssets;
   </script>
 </body>
 </html>
