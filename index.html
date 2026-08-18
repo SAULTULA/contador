@@ -4,176 +4,156 @@
   <meta charset="UTF-8">
   <title>Panel Creador de Widgets</title>
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8fafc; padding: 25px; display: flex; gap: 30px; justify-content: center; }
-    .panel { background: white; padding: 24px; border-radius: 12px; width: 390px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
-    h2 { font-size: 18px; color: #1e293b; margin-bottom: 16px; }
-    label { display: block; margin-top: 12px; font-weight: 600; font-size: 11px; color: #475569; text-transform: uppercase; }
-    input[type="text"], select { width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 13px; }
-    .color-row { display: flex; gap: 10px; }
-    .color-group { flex: 1; }
-    input[type="color"] { width: 100%; height: 38px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; margin-top: 4px; padding: 2px; }
-    textarea { width: 100%; height: 80px; margin-top: 8px; font-family: monospace; font-size: 11px; padding: 8px; box-sizing: border-box; border: 1px solid #cbd5e1; border-radius: 6px; }
-    button { margin-top: 18px; width: 100%; padding: 12px; background: #0284c7; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
-    button:hover { background: #0369a1; }
-    .preview-box { background: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; text-align: center; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f1f5f9;
+      color: #0f172a;
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      display: flex;
+      gap: 20px;
+      max-width: 900px;
+      width: 100%;
+    }
+    .panel, .preview-panel {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      flex: 1;
+    }
+    h2 { font-size: 18px; margin-bottom: 15px; }
+    .form-group { margin-bottom: 12px; }
+    label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 4px; text-transform: uppercase; color: #475569; }
+    input, select, textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    .color-group { display: flex; gap: 10px; }
+    .btn-submit {
+      background: #0284c7;
+      color: white;
+      border: none;
+      padding: 10px;
+      width: 100%;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+      font-size: 13px;
+    }
+    .btn-submit:hover { background: #0369a1; }
+    textarea { height: 70px; resize: none; font-family: monospace; font-size: 11px; }
+    .preview-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 280px;
+      background: #f8fafc;
+      border: 2px dashed #cbd5e1;
+      border-radius: 8px;
+    }
+    iframe { border: none; overflow: hidden; }
   </style>
 </head>
 <body>
 
-  <div class="panel">
-    <h2>Creador de Widgets</h2>
-    
-    <label>ID del Cliente (sin espacios):</label>
-    <input type="text" id="inp-id" value="cliente1" placeholder="ej: taller_juan">
-    
-    <label>Título del Widget:</label>
-    <input type="text" id="inp-titulo" value="VISITAS GENERALES">
-
-    <label>Imagen / GIF de la carpeta Assets:</label>
-    <select id="sel-gif" onchange="evaluarOpcionGif(this.value)">
-      <option value="">Cargando imágenes de /assets...</option>
-    </select>
-
-    <label id="lbl-custom" style="display:none;">URL Personalizada Externa:</label>
-    <input type="text" id="inp-custom-gif" style="display:none;" placeholder="https://.../imagen.gif">
-
-    <div class="color-row">
-      <div class="color-group">
-        <label>Fondo:</label>
-        <input type="color" id="inp-bg" value="#0f172a">
+  <div class="container">
+    <!-- Formulario de Configuración -->
+    <div class="panel">
+      <h2>Creador de Widgets</h2>
+      
+      <div class="form-group">
+        <label>ID del Cliente (Sin espacios):</label>
+        <input type="text" id="inp-id" value="cliente1" placeholder="ej: cliente1">
       </div>
-      <div class="color-group">
-        <label>Texto:</label>
-        <input type="color" id="inp-text" value="#ffffff">
+
+      <div class="form-group">
+        <label>Título del Widget:</label>
+        <input type="text" id="inp-titulo" value="VISITAS GENERALES">
+      </div>
+
+      <div class="form-group">
+        <label>Imagen / GIF de la carpeta Assets:</label>
+        <select id="inp-imagen">
+          <option value="assets/globo.gif">assets/globo.gif</option>
+        </select>
+      </div>
+
+      <div class="form-group color-group">
+        <div style="flex:1;">
+          <label>Fondo:</label>
+          <input type="color" id="inp-bg" value="#0f172a">
+        </div>
+        <div style="flex:1;">
+          <label>Texto:</label>
+          <input type="color" id="inp-text" value="#ffffff">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Mostrar Banderas de Visitantes:</label>
+        <select id="inp-banderas">
+          <option value="SI">SÍ</option>
+          <option value="NO">NO</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>URL Base del Proyecto (Vercel o Pages):</label>
+        <input type="text" id="inp-url" value="https://contador-red-delta.vercel.app">
+      </div>
+
+      <button class="btn-submit" onclick="generarIframe()">Guardar y Generar iFrame</button>
+
+      <div class="form-group" style="margin-top: 15px;">
+        <label>Código iFrame para el Cliente:</label>
+        <textarea id="inp-code" readonly></textarea>
       </div>
     </div>
 
-    <label>Mostrar Banderas de Visitantes:</label>
-    <select id="inp-banderas">
-      <option value="SÍ">SÍ</option>
-      <option value="NO">NO</option>
-    </select>
-
-    <label>URL de GitHub Pages:</label>
-    <input type="text" id="inp-gh" value="https://saultula.github.io/contador/" onchange="cargarImagenesAssets()">
-
-    <button onclick="guardarYGenerar()">Guardar y Generar iFrame</button>
-
-    <label>Código iFrame para el Cliente:</label>
-    <textarea id="out-code" readonly placeholder="El código aparecerá aquí..."></textarea>
-  </div>
-
-  <div class="preview-box">
-    <h2>Vista Previa</h2>
-    <div id="preview-container">
-      <p style="color:#94a3b8; font-size:13px; margin-top: 40px;">Completá los datos y tocá en "Guardar y Generar iFrame".</p>
+    <!-- Previsualización -->
+    <div class="preview-panel">
+      <h2 style="text-align: center;">Vista Previa</h2>
+      <div class="preview-container" id="preview-box">
+        <!-- El iFrame se inserta acá -->
+      </div>
     </div>
   </div>
 
   <script>
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyVvN3AlbRYguoTGWbyvUok7Ig9NQoxbIvVYHogMPcTo-0z2--Qlc1zkEnO-xHVongA/exec";
-
-    // Función para obtener dinámicamente las imágenes de /assets vía API de GitHub
-    function cargarImagenesAssets() {
-      const ghUrl = document.getElementById('inp-gh').value.trim();
-      const select = document.getElementById('sel-gif');
-
-      // Extraer usuario y repositorio desde la URL de GitHub Pages
-      const match = ghUrl.match(/https?:\/\/([^.]+)\.github\.io\/([^\/]+)/);
-      if (!match) {
-        select.innerHTML = '<option value="custom">-- Usar URL personalizada --</option>';
-        evaluarOpcionGif('custom');
-        return;
-      }
-
-      const user = match[1];
-      const repo = match[2];
-      const apiUrl = `https://api.github.com/repos/${user}/${repo}/contents/assets`;
-
-      fetch(apiUrl)
-        .then(res => res.json())
-        .then(files => {
-          select.innerHTML = '';
-          if (Array.isArray(files)) {
-            // Filtrar solo formatos de imagen
-            const imagenes = files.filter(f => f.name.match(/\.(gif|png|jpe?g|svg|webp)$/i));
-            
-            imagenes.forEach(img => {
-              const fileUrl = `${ghUrl.endsWith('/') ? ghUrl : ghUrl + '/'}assets/${img.name}`;
-              const opt = document.createElement('option');
-              opt.value = fileUrl;
-              opt.innerText = `assets/${img.name}`;
-              select.appendChild(opt);
-            });
-          }
-          
-          // Añadir opción para pegar URL externa por si acaso
-          const optCustom = document.createElement('option');
-          optCustom.value = 'custom';
-          optCustom.innerText = '-- Pegar URL externa --';
-          select.appendChild(optCustom);
-
-          evaluarOpcionGif(select.value);
-        })
-        .catch(() => {
-          select.innerHTML = '<option value="custom">-- Usar URL personalizada --</option>';
-          evaluarOpcionGif('custom');
-        });
-    }
-
-    function evaluarOpcionGif(val) {
-      const customLbl = document.getElementById('lbl-custom');
-      const customInp = document.getElementById('inp-custom-gif');
-      if (val === 'custom') {
-        customLbl.style.display = 'block';
-        customInp.style.display = 'block';
-      } else {
-        customLbl.style.display = 'none';
-        customInp.style.display = 'none';
-      }
-    }
-
-    function guardarYGenerar() {
-      const id = document.getElementById('inp-id').value.trim();
-      const titulo = document.getElementById('inp-titulo').value.trim();
+    function generarIframe() {
+      const id = document.getElementById('inp-id').value.trim() || 'demo';
+      let baseUrl = document.getElementById('inp-url').value.trim();
       
-      const selGif = document.getElementById('sel-gif').value;
-      let gifUrl = selGif;
-      if (selGif === 'custom') {
-        gifUrl = document.getElementById('inp-custom-gif').value.trim();
+      if (baseUrl.endsWith('/')) {
+        baseUrl = baseUrl.slice(0, -1);
       }
 
-      const bgColor = document.getElementById('inp-bg').value;
-      const textColor = document.getElementById('inp-text').value;
-      const banderas = document.getElementById('inp-banderas').value;
-      let ghUrl = document.getElementById('inp-gh').value.trim();
+      const timestamp = Date.now();
+      const iframeSrc = `${baseUrl}/widget.html?id=${encodeURIComponent(id)}&t=${timestamp}`;
       
-      if (!ghUrl || !id) {
-        alert("Por favor completa el ID y la URL de tu GitHub Pages");
-        return;
-      }
+      const iframeHtml = `<iframe src="${iframeSrc}" width="240" height="270" frameborder="0" scrolling="no" style="border:none; overflow:hidden;"></iframe>`;
+      
+      // Actualizar textarea con el código del iframe
+      document.getElementById('inp-code').value = iframeHtml;
 
-      if (ghUrl.endsWith('/')) ghUrl = ghUrl.slice(0, -1);
-
-      const configObj = {
-        bg_color: bgColor,
-        text_color: textColor
-      };
-
-      fetch(`${APPS_SCRIPT_URL}?action=guardar_config&id=${encodeURIComponent(id)}&titulo=${encodeURIComponent(titulo)}&elemento_visual=${encodeURIComponent(gifUrl)}&mostrar_banderas=${encodeURIComponent(banderas)}&config=${encodeURIComponent(JSON.stringify(configObj))}`)
-        .then(res => res.json())
-        .then(() => {
-          const widgetUrl = `${ghUrl}/widget.html?id=${encodeURIComponent(id)}&t=${Date.now()}`;
-          const iframeCode = `<iframe src="${widgetUrl}" width="240" height="270" frameborder="0" scrolling="no" style="border:none; overflow:hidden;"></iframe>`;
-          
-          document.getElementById('out-code').value = iframeCode;
-          document.getElementById('preview-container').innerHTML = iframeCode;
-        })
-        .catch(err => alert("Error al guardar la configuración: " + err));
+      // Inyectar en la vista previa
+      const previewBox = document.getElementById('preview-box');
+      previewBox.innerHTML = iframeHtml;
     }
 
-    // Cargar la lista de imágenes apenas abre la página
-    window.onload = cargarImagenesAssets;
+    // Cargar la vista previa automáticamente al abrir la página
+    window.onload = function() {
+      generarIframe();
+    };
   </script>
 </body>
 </html>
