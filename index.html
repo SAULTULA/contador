@@ -126,29 +126,30 @@
   <script>
     function generarIframe() {
       const id = document.getElementById('inp-id').value.trim() || 'demo';
-      let baseUrl = document.getElementById('inp-url').value.trim();
+      let rawUrl = document.getElementById('inp-url').value.trim();
       
-      if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1);
+      // Limpiar comillas, espacios o caracteres de formato sobrantes
+      rawUrl = rawUrl.replace(/[()'"`]/g, '');
+      if (rawUrl.endsWith('/')) rawUrl = rawUrl.slice(0, -1);
 
-      const iframeSrc = `${baseUrl}/widget.html?id=${encodeURIComponent(id)}&t=${Date.now()}`;
-      const iframeHtml = `<iframe src="${iframeSrc}" width="240" height="270" frameborder="0" scrolling="no" style="border:none; overflow:hidden;"></iframe>`;
+      const iframeSrc = `${rawUrl}/widget.html?id=${encodeURIComponent(id)}&t=${Date.now()}`;
       
-      // Código de salida para que el usuario lo copie
-      document.getElementById('inp-code').value = iframeHtml;
+      // Generar código plano para la caja de texto
+      const iframeText = `<iframe src="${iframeSrc}" width="240" height="270" frameborder="0" scrolling="no" style="border:none; overflow:hidden;"></iframe>`;
+      document.getElementById('inp-code').value = iframeText;
 
-      // Inyección directa del iframe en la vista previa utilizando la URL estricta
+      // Inyección limpia del iframe en la vista previa
       const previewBox = document.getElementById('preview-box');
       previewBox.innerHTML = '';
 
       const iframe = document.createElement('iframe');
+      iframe.src = iframeSrc;
       iframe.width = '240';
       iframe.height = '270';
       iframe.style.border = 'none';
       iframe.style.overflow = 'hidden';
+      iframe.setAttribute('frameborder', '0');
       iframe.setAttribute('scrolling', 'no');
-      
-      // Forzar carga directa de la URL base
-      iframe.src = iframeSrc;
 
       previewBox.appendChild(iframe);
     }
