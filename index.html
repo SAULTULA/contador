@@ -2,159 +2,142 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Panel Creador de Widgets</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Widget Contador</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f1f5f9;
-      color: #0f172a;
-      display: flex;
-      justify-content: center;
-      padding: 20px;
-    }
-    .container {
-      display: flex;
-      gap: 20px;
-      max-width: 900px;
-      width: 100%;
-    }
-    .panel, .preview-panel {
-      background: #ffffff;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      flex: 1;
-    }
-    h2 { font-size: 18px; margin-bottom: 15px; }
-    .form-group { margin-bottom: 12px; }
-    label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 4px; text-transform: uppercase; color: #475569; }
-    input, select, textarea {
-      width: 100%;
-      padding: 8px 10px;
-      border: 1px solid #cbd5e1;
-      border-radius: 6px;
-      font-size: 13px;
-    }
-    .color-group { display: flex; gap: 10px; }
-    .btn-submit {
-      background: #0284c7;
-      color: white;
-      border: none;
-      padding: 10px;
-      width: 100%;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 10px;
-      font-size: 13px;
-    }
-    .btn-submit:hover { background: #0369a1; }
-    textarea { height: 70px; resize: none; font-family: monospace; font-size: 11px; }
-    .preview-container {
+      background: transparent;
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 280px;
-      background: #f8fafc;
-      border: 2px dashed #cbd5e1;
-      border-radius: 8px;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
     }
+    .widget-card {
+      width: 100%;
+      height: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      background-color: #0f172a;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .widget-title { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+    .widget-img { width: 45px; height: 45px; object-fit: contain; }
+    .widget-count { font-size: 24px; font-weight: 800; font-family: monospace; }
+    .location-info { font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 3px; width: 100%; }
+    .flags-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; font-size: 11px; margin-top: 4px; max-height: 40px; overflow-y: auto; }
+    .flag-item { background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; display: flex; align-items: center; gap: 4px; }
+    .flag-img { width: 16px; height: 12px; object-fit: cover; border-radius: 2px; }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 10px;
+      width: 100%;
+      font-size: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 6px;
+      border-radius: 6px;
+      margin-top: 4px;
+    }
+    .stat-item { display: flex; justify-content: space-between; }
+    .stat-label { opacity: 0.7; }
+    .stat-val { font-weight: bold; }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <div class="panel">
-      <h2>Creador de Widgets</h2>
-      
-      <div class="form-group">
-        <label>ID del Cliente (Sin espacios):</label>
-        <input type="text" id="inp-id" value="cliente1">
-      </div>
+  <div class="widget-card" id="card">
+    <div class="widget-title" id="w-title">VISITAS GENERALES</div>
+    <img src="assets/globo.gif" alt="Icono" class="widget-img" id="w-img">
+    <div class="widget-count" id="w-count">000000</div>
 
-      <div class="form-group">
-        <label>Título del Widget:</label>
-        <input type="text" id="inp-titulo" value="VISITAS GENERALES">
-      </div>
-
-      <div class="form-group">
-        <label>Imagen / GIF de la carpeta Assets:</label>
-        <select id="inp-imagen">
-          <option value="assets/globo.gif">assets/globo.gif</option>
-        </select>
-      </div>
-
-      <div class="form-group color-group">
-        <div style="flex:1;">
-          <label>Fondo:</label>
-          <input type="color" id="inp-bg" value="#0f172a">
-        </div>
-        <div style="flex:1;">
-          <label>Texto:</label>
-          <input type="color" id="inp-text" value="#ffffff">
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label>Mostrar Banderas de Visitantes:</label>
-        <select id="inp-banderas">
-          <option value="SI">SÍ</option>
-          <option value="NO">NO</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>URL Base del Proyecto:</label>
-        <input type="text" id="inp-url" value="https://contador-red-delta.vercel.app">
-      </div>
-
-      <button class="btn-submit" onclick="generarIframe()">Guardar y Generar iFrame</button>
-
-      <div class="form-group" style="margin-top: 15px;">
-        <label>Código iFrame para el Cliente:</label>
-        <textarea id="inp-code" readonly></textarea>
-      </div>
+    <div class="location-info" id="w-location">
+      <div class="flags-list" id="flags-container">Cargando datos...</div>
     </div>
 
-    <div class="preview-panel">
-      <h2 style="text-align: center;">Vista Previa</h2>
-      <div class="preview-container" id="preview-box"></div>
+    <div class="stats-grid">
+      <div class="stat-item"><span class="stat-label">Hoy:</span><span class="stat-val" id="st-today">-</span></div>
+      <div class="stat-item"><span class="stat-label">Semana:</span><span class="stat-val" id="st-week">-</span></div>
+      <div class="stat-item"><span class="stat-label">Mes:</span><span class="stat-val" id="st-month">-</span></div>
+      <div class="stat-item"><span class="stat-label">Total:</span><span class="stat-val" id="st-total">-</span></div>
     </div>
   </div>
 
   <script>
-    function generarIframe() {
-      const id = document.getElementById('inp-id').value.trim() || 'demo';
-      let rawUrl = document.getElementById('inp-url').value.trim();
-      
-      // Limpiar comillas, espacios o caracteres de formato sobrantes
-      rawUrl = rawUrl.replace(/[()'"`]/g, '');
-      if (rawUrl.endsWith('/')) rawUrl = rawUrl.slice(0, -1);
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwXNGsNRBLPxg1z2C0Ks68jfJyjGRqxp5-Y4JBdCnnbO2SkGIJamL46PFE8P75yYQwrcA/exec";
 
-      const iframeSrc = `${rawUrl}/widget.html?id=${encodeURIComponent(id)}&t=${Date.now()}`;
-      
-      // Generar código plano para la caja de texto
-      const iframeText = `<iframe src="${iframeSrc}" width="240" height="270" frameborder="0" scrolling="no" style="border:none; overflow:hidden;"></iframe>`;
-      document.getElementById('inp-code').value = iframeText;
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id') || 'demo';
 
-      // Inyección limpia del iframe en la vista previa
-      const previewBox = document.getElementById('preview-box');
-      previewBox.innerHTML = '';
+    fetch('/api/geo')
+      .then(res => res.json())
+      .then(geo => {
+        registrarEnGoogleSheets(geo.country, geo.country, geo.city);
+      })
+      .catch(() => {
+        registrarEnGoogleSheets('Argentina', 'AR', 'Desconocida');
+      });
 
-      const iframe = document.createElement('iframe');
-      iframe.src = iframeSrc;
-      iframe.width = '240';
-      iframe.height = '270';
-      iframe.style.border = 'none';
-      iframe.style.overflow = 'hidden';
-      iframe.setAttribute('frameborder', '0');
-      iframe.setAttribute('scrolling', 'no');
+    function registrarEnGoogleSheets(pais, codigoPais, ciudad) {
+      const endpoint = `${GOOGLE_SCRIPT_URL}?action=registrar&id=${encodeURIComponent(id)}&pais=${encodeURIComponent(pais)}&codigo_pais=${encodeURIComponent(codigoPais)}&ciudad=${encodeURIComponent(ciudad)}`;
 
-      previewBox.appendChild(iframe);
+      fetch(endpoint)
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) return;
+
+          if (data.titulo) document.getElementById('w-title').innerText = data.titulo;
+          if (data.elemento_visual) document.getElementById('w-img').src = data.elemento_visual;
+
+          if (data.personalizado) {
+            if (data.personalizado.bg_color) document.getElementById('card').style.backgroundColor = data.personalizado.bg_color;
+            if (data.personalizado.text_color) {
+              document.getElementById('card').style.color = data.personalizado.text_color;
+              document.getElementById('w-title').style.color = data.personalizado.text_color;
+            }
+          }
+
+          document.getElementById('w-count').innerText = String(data.vistas_total).padStart(6, '0');
+          document.getElementById('st-today').innerText = data.visitas_hoy;
+          document.getElementById('st-week').innerText = data.visitas_semanal;
+          document.getElementById('st-month').innerText = data.visitas_mes;
+          document.getElementById('st-total').innerText = data.vistas_total;
+
+          const flagsContainer = document.getElementById('flags-container');
+          if (data.mostrar_banderas === "NO") {
+            document.getElementById('w-location').style.display = 'none';
+          } else {
+            flagsContainer.innerHTML = '';
+            
+            for (const [cod, info] of Object.entries(data.paises)) {
+              const codeLower = cod.toLowerCase();
+              const flagElement = (cod !== "XX" && cod !== "")
+                ? `<img src="https://flagcdn.com/24x18/${codeLower}.png" class="flag-img" alt="${cod}">`
+                : '🌐';
+              
+              const item = document.createElement('div');
+              item.className = 'flag-item';
+              item.title = `${info.nombre}: ${info.count} visitas`;
+              item.innerHTML = `${flagElement} <strong>${info.count}</strong>`;
+              flagsContainer.appendChild(item);
+            }
+          }
+        })
+        .catch(err => {
+          console.error("Error al conectar con la planilla:", err);
+          document.getElementById('flags-container').innerText = 'Error de conexión';
+        });
     }
-
-    window.onload = generarIframe;
   </script>
 </body>
 </html>
