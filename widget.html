@@ -57,7 +57,7 @@
 
     <div class="location-info" id="w-location">
       <span id="user-flag">🌐</span>
-      <span id="user-city">Ubicación</span>
+      <span id="user-city">Cargando...</span>
     </div>
 
     <div class="stats-grid">
@@ -71,7 +71,6 @@
   <script>
     const params = new URLSearchParams(window.location.search);
     
-    // Parámetros de personalización
     const id = params.get('id') || 'demo';
     const bg = params.get('bg') || '#0f172a';
     const text = params.get('text') || '#ffffff';
@@ -83,25 +82,22 @@
     if (params.get('titulo')) document.getElementById('w-title').innerText = params.get('titulo');
     if (params.get('img')) document.getElementById('w-img').src = params.get('img');
 
-    // Ubicación directa de las cabeceras de Vercel
+    // Obtener datos de ubicación de Vercel vía API interna
     if (banderas === 'SI') {
-      const country = params.get('country');
-      const city = params.get('city');
-
-      if (country && country !== ':x-vercel-ip-country') {
-        const flagEmoji = country.toUpperCase().replace(/./g, char => 
-          String.fromCodePoint(127397 + char.charCodeAt())
-        );
-        document.getElementById('user-flag').innerText = flagEmoji;
-        document.getElementById('user-city').innerText = (city && city !== ':x-vercel-ip-city') ? decodeURIComponent(city) : country;
-      } else {
-        document.getElementById('user-city').innerText = 'Localhost';
-      }
+      fetch('/api/geo')
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('user-flag').innerText = data.flag;
+          document.getElementById('user-city').innerText = `${data.city}, ${data.country}`;
+        })
+        .catch(() => {
+          document.getElementById('user-city').innerText = 'Localhost';
+        });
     } else {
       document.getElementById('w-location').style.display = 'none';
     }
 
-    // Métricas del Contador por ID
+    // Lógica del contador por ID iniciando en 1
     const todayStr = new Date().toISOString().slice(0, 10);
     const totalKey = `visits_total_${id}`;
     const todayKey = `visits_today_${id}_${todayStr}`;
