@@ -130,24 +130,25 @@
       
       if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1);
 
-      const targetUrl = `${baseUrl}/widget.html?id=${encodeURIComponent(id)}&t=${Date.now()}`;
+      const iframeSrc = `${baseUrl}/widget.html?id=${encodeURIComponent(id)}&t=${Date.now()}`;
+      const iframeHtml = `<iframe src="${iframeSrc}" width="240" height="270" frameborder="0" scrolling="no" style="border:none; overflow:hidden;"></iframe>`;
       
-      // Código HTML para el cliente
-      const iframeText = `<iframe src="${targetUrl}" width="240" height="270" frameborder="0" scrolling="no" style="border:none; overflow:hidden;"></iframe>`;
-      document.getElementById('inp-code').value = iframeText;
+      // Código de salida para que el usuario lo copie
+      document.getElementById('inp-code').value = iframeHtml;
 
-      // Inyección limpia en el DOM
+      // Inyección directa del iframe en la vista previa utilizando la URL estricta
       const previewBox = document.getElementById('preview-box');
-      previewBox.innerHTML = ''; 
+      previewBox.innerHTML = '';
 
       const iframe = document.createElement('iframe');
-      iframe.src = targetUrl;
       iframe.width = '240';
       iframe.height = '270';
-      iframe.setAttribute('frameborder', '0');
-      iframe.setAttribute('scrolling', 'no');
       iframe.style.border = 'none';
       iframe.style.overflow = 'hidden';
+      iframe.setAttribute('scrolling', 'no');
+      
+      // Forzar carga directa de la URL base
+      iframe.src = iframeSrc;
 
       previewBox.appendChild(iframe);
     }
