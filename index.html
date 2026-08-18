@@ -60,7 +60,6 @@
       border: 2px dashed #cbd5e1;
       border-radius: 8px;
     }
-    iframe { border: none; width: 240px; height: 270px; }
   </style>
 </head>
 <body>
@@ -131,11 +130,26 @@
       
       if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1);
 
-      const iframeSrc = `${baseUrl}/widget.html?id=${encodeURIComponent(id)}&t=${Date.now()}`;
-      const iframeHtml = `<iframe src="${iframeSrc}" width="240" height="270" frameborder="0" scrolling="no"></iframe>`;
+      const targetUrl = `${baseUrl}/widget.html?id=${encodeURIComponent(id)}&t=${Date.now()}`;
       
-      document.getElementById('inp-code').value = iframeHtml;
-      document.getElementById('preview-box').innerHTML = iframeHtml;
+      // Código HTML para el cliente
+      const iframeText = `<iframe src="${targetUrl}" width="240" height="270" frameborder="0" scrolling="no" style="border:none; overflow:hidden;"></iframe>`;
+      document.getElementById('inp-code').value = iframeText;
+
+      // Inyección limpia en el DOM
+      const previewBox = document.getElementById('preview-box');
+      previewBox.innerHTML = ''; 
+
+      const iframe = document.createElement('iframe');
+      iframe.src = targetUrl;
+      iframe.width = '240';
+      iframe.height = '270';
+      iframe.setAttribute('frameborder', '0');
+      iframe.setAttribute('scrolling', 'no');
+      iframe.style.border = 'none';
+      iframe.style.overflow = 'hidden';
+
+      previewBox.appendChild(iframe);
     }
 
     window.onload = generarIframe;
