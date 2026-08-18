@@ -37,6 +37,7 @@
       font-size: 13px;
     }
     .color-group { display: flex; gap: 10px; }
+    .size-group { display: flex; gap: 10px; }
     .btn-submit {
       background: #0284c7;
       color: white;
@@ -104,10 +105,16 @@
         </select>
       </div>
 
-      <!-- Control deslizable para ajustar el tamaño -->
-      <div class="form-group">
-        <label>Tamaño / Ancho del iFrame: <span id="lbl-size">200px</span></label>
-        <input type="range" id="inp-size" min="160" max="300" value="200" oninput="actualizarTamano(this.value)">
+      <!-- Sliders independientes para Ancho y Alto -->
+      <div class="form-group size-group">
+        <div style="flex:1;">
+          <label>Ancho (Width): <span id="lbl-width">200px</span></label>
+          <input type="range" id="inp-width" min="150" max="400" value="200" oninput="actualizarDimensiones()">
+        </div>
+        <div style="flex:1;">
+          <label>Alto (Height): <span id="lbl-height">220px</span></label>
+          <input type="range" id="inp-height" min="150" max="400" value="220" oninput="actualizarDimensiones()">
+        </div>
       </div>
 
       <div class="form-group">
@@ -130,23 +137,27 @@
   </div>
 
   <script>
-    function actualizarTamano(val) {
-      document.getElementById('lbl-size').innerText = val + 'px';
+    function actualizarDimensiones() {
+      const w = document.getElementById('inp-width').value;
+      const h = document.getElementById('inp-height').value;
+      document.getElementById('lbl-width').innerText = w + 'px';
+      document.getElementById('lbl-height').innerText = h + 'px';
       generarIframe();
     }
 
     function generarIframe() {
       const id = document.getElementById('inp-id').value.trim() || 'demo';
       let rawUrl = document.getElementById('inp-url').value.trim();
-      const size = document.getElementById('inp-size').value;
-      const height = Math.round(size * 1.15); // Calcula la altura proporcionalmente
+      
+      const width = document.getElementById('inp-width').value;
+      const height = document.getElementById('inp-height').value;
       
       rawUrl = rawUrl.replace(/[()'"`]/g, '');
       if (rawUrl.endsWith('/')) rawUrl = rawUrl.slice(0, -1);
 
       const iframeSrc = `${rawUrl}/widget.html?id=${encodeURIComponent(id)}&t=${Date.now()}`;
       
-      const iframeText = `<iframe src="${iframeSrc}" width="${size}" height="${height}" frameborder="0" scrolling="no" style="border:none; overflow:hidden;"></iframe>`;
+      const iframeText = `<iframe src="${iframeSrc}" width="${width}" height="${height}" frameborder="0" scrolling="no" style="border:none; overflow:hidden;"></iframe>`;
       document.getElementById('inp-code').value = iframeText;
 
       const previewBox = document.getElementById('preview-box');
@@ -154,7 +165,7 @@
 
       const iframe = document.createElement('iframe');
       iframe.src = iframeSrc;
-      iframe.width = size;
+      iframe.width = width;
       iframe.height = height;
       iframe.style.border = 'none';
       iframe.style.overflow = 'hidden';
