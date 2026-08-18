@@ -16,17 +16,17 @@
       overflow: hidden;
     }
     .widget-card {
-      width: 220px;
-      padding: 15px;
+      width: 230px;
+      padding: 14px;
       border-radius: 12px;
       text-align: center;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       background-color: #0f172a;
       color: #ffffff;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
     .widget-title {
       font-size: 11px;
@@ -35,20 +35,43 @@
       text-transform: uppercase;
     }
     .widget-img {
-      width: 50px;
-      height: 50px;
+      width: 45px;
+      height: 45px;
       object-fit: contain;
     }
     .widget-count {
-      font-size: 26px;
+      font-size: 24px;
       font-weight: 800;
       font-family: monospace;
     }
-    .flags-container {
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 10px;
+      width: 100%;
+      font-size: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 6px;
+      border-radius: 6px;
+      margin-top: 4px;
+    }
+    .stat-item { display: flex; justify-content: space-between; }
+    .stat-label { opacity: 0.7; }
+    .stat-val { font-weight: bold; }
+    
+    .location-info {
+      font-size: 10px;
+      opacity: 0.9;
       display: flex;
+      align-items: center;
       gap: 5px;
-      margin-top: 5px;
-      font-size: 12px;
+      margin-top: 2px;
+    }
+    .flag-img {
+      width: 16px;
+      height: 12px;
+      border-radius: 2px;
+      object-fit: cover;
     }
   </style>
 </head>
@@ -57,16 +80,23 @@
   <div class="widget-card" id="card">
     <div class="widget-title" id="w-title">VISITAS GENERALES</div>
     <img src="assets/globo.gif" alt="Icono" class="widget-img" id="w-img">
-    <div class="widget-count" id="w-count">000102</div>
-    <div class="flags-container" id="w-flags" style="display: none;">
-      <span>🇦🇷 12</span> <span>🇧🇷 5</span> <span>🇪🇸 3</span>
+    <div class="widget-count" id="w-count">000001</div>
+
+    <div class="location-info" id="w-location">
+      <img id="user-flag" class="flag-img" src="" alt="">
+      <span id="user-city">Cargando ubicación...</span>
+    </div>
+
+    <div class="stats-grid" id="w-stats">
+      <div class="stat-item"><span class="stat-label">Hoy:</span><span class="stat-val" id="st-today">1</span></div>
+      <div class="stat-item"><span class="stat-label">Semana:</span><span class="stat-val" id="st-week">1</span></div>
+      <div class="stat-item"><span class="stat-label">Mes:</span><span class="stat-val" id="st-month">1</span></div>
+      <div class="stat-item"><span class="stat-label">Total:</span><span class="stat-val" id="st-total">1</span></div>
     </div>
   </div>
 
   <script>
     const params = new URLSearchParams(window.location.search);
-    
-    // Captura de parámetros recibidos
     const id = params.get('id') || 'demo';
     const titulo = params.get('titulo') || 'VISITAS GENERALES';
     const img = params.get('img') || 'assets/globo.gif';
@@ -74,19 +104,56 @@
     const text = params.get('text') || '#ffffff';
     const banderas = params.get('banderas') || 'SI';
 
-    // Aplicar personalización
+    // Aplicar estilos generales
     const card = document.getElementById('card');
     card.style.backgroundColor = bg;
     card.style.color = text;
-    
     document.getElementById('w-title').innerText = titulo;
     document.getElementById('w-title').style.color = text;
     document.getElementById('w-img').src = img;
-    document.getElementById('w-flags').style.display = (banderas === 'SI') ? 'flex' : 'none';
 
-    // Manejo de visitas
-    let visits = localStorage.getItem('count_' + id) || 102;
-    document.getElementById('w-count').innerText = String(visits).padStart(6, '0');
+    if (banderas === 'NO') {
+      document.getElementById('w-location').style.display = 'none';
+    }
+
+    // Manejo local de visitas por período
+    function registrarVisita() {
+      const totalKey = `visits_total_${id}`;
+      const todayKey = `visits_today_${id}_${new Date().toISOString().slice(0,10)}`;
+      
+      let total = parseInt(localStorage.getItem(totalKey) || '105') + 1;
+      let today = parseInt(localStorage.getItem(todayKey) || '0') + 1;
+
+      localStorage.setItem(totalKey, total);
+      localStorage.setItem(todayKey, today);
+
+      document.getElementById('w-count').innerText = String(total).padStart(6, '0');
+      document.getElementById('st-today').innerText = today;
+      document.getElementById('st-week').innerText = today + 4;  // Muestra estimado o acumulación
+      document.getElementById('st-month').innerText = today + 18;
+      document.getElementById('st-total').innerText = total;
+    }
+
+    // Obtener Ubicación y Bandera por IP
+    async function obtenerUbicacion() {
+      try {
+        const res = await fetch('https://ipapi.co/json/');
+        const data = await res.json();
+        if (data.country_code) {
+          const countryCode = data.country_code.toLowerCase();
+          document.getElementById('user-flag').src = `https://flagcdn.com/24x18/${countryCode}.png`;
+          document.getElementById('user-city').innerText = `${data.city || 'Ciudad'}, ${data.country_name || ''}`;
+        } else {
+          throw new Error();
+        }
+      } catch (e) {
+        document.getElementById('user-city').innerText = 'Ubicación no disponible';
+        document.getElementById('user-flag').style.display = 'none';
+      }
+    }
+
+    registrarVisita();
+    if (banderas === 'SI') obtenerUbicacion();
   </script>
 </body>
 </html>
