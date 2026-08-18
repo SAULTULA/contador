@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Widget Contador</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -88,7 +89,6 @@
       const city = params.get('city');
 
       if (country && country !== ':x-vercel-ip-country') {
-        // Convierte código "AR" a Emoji de Bandera 🇦🇷
         const flagEmoji = country.toUpperCase().replace(/./g, char => 
           String.fromCodePoint(127397 + char.charCodeAt())
         );
@@ -101,15 +101,21 @@
       document.getElementById('w-location').style.display = 'none';
     }
 
-    // Métricas del Contador
+    // Métricas del Contador por ID
+    const todayStr = new Date().toISOString().slice(0, 10);
     const totalKey = `visits_total_${id}`;
-    let total = parseInt(localStorage.getItem(totalKey) || '105') + 1;
+    const todayKey = `visits_today_${id}_${todayStr}`;
+
+    let total = parseInt(localStorage.getItem(totalKey) || '0') + 1;
+    let today = parseInt(localStorage.getItem(todayKey) || '0') + 1;
+
     localStorage.setItem(totalKey, total);
+    localStorage.setItem(todayKey, today);
 
     document.getElementById('w-count').innerText = String(total).padStart(6, '0');
-    document.getElementById('st-today').innerText = 1;
-    document.getElementById('st-week').innerText = 4;
-    document.getElementById('st-month').innerText = 18;
+    document.getElementById('st-today').innerText = today;
+    document.getElementById('st-week').innerText = today;
+    document.getElementById('st-month').innerText = today;
     document.getElementById('st-total').innerText = total;
   </script>
 </body>
