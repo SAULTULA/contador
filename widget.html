@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <title>Widget Contador de Visitas</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -38,13 +39,13 @@
       margin-bottom: 10px;
       opacity: 0.9;
     }
-    /* Sección Países */
+    /* Lista de Países y Ciudades */
     .countries-section {
       background: rgba(255,255,255,0.04);
       border-radius: 8px;
       padding: 8px;
       margin-bottom: 10px;
-      max-height: 120px;
+      max-height: 130px;
       overflow-y: auto;
       text-align: left;
     }
@@ -81,7 +82,7 @@
       opacity: 0.75;
       margin-bottom: 6px;
     }
-    /* Sección Métricas Temporales */
+    /* Métricas Temporales */
     .grid-stats {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -120,12 +121,12 @@
     <img id="img-globo" src="./assets/globo.gif" class="globe-img" alt="Elemento Visual">
     <div class="title" id="txt-titulo">Cargando...</div>
     
-    <!-- Lista de países y ciudades -->
+    <!-- Contenedor Geográfico -->
     <div class="countries-section" id="countries-list">
-      <div style="font-size: 10px; text-align: center; opacity: 0.6;">Cargando ubicaciones...</div>
+      <div style="font-size: 10px; text-align: center; opacity: 0.6;">Obteniendo ubicación...</div>
     </div>
 
-    <!-- Métricas generales -->
+    <!-- Bloque de Métricas Generales -->
     <div class="grid-stats">
       <div class="stat-box">
         <div class="stat-label">Hoy</div>
@@ -156,84 +157,107 @@
     const params = new URLSearchParams(window.location.search);
     const clientId = params.get('id') || 'demo';
 
-    // 1. Obtener País y Ciudad
-    fetch('https://ipapi.co/json/')
-      .then(res => res.json())
-      .then(geo => {
-        const pais = geo.country_name || 'Desconocido';
-        const codigoPais = geo.country_code || 'XX';
-        const ciudad = geo.city || 'Desconocida';
-        
-        return fetch(`${APPS_SCRIPT_URL}?action=registrar&id=${clientId}&pais=${encodeURIComponent(pais)}&codigo_pais=${encodeURIComponent(codigoPais)}&ciudad=${encodeURIComponent(ciudad)}&_=${Date.now()}`);
-      })
-      .catch(() => {
-        return fetch(`${APPS_SCRIPT_URL}?action=registrar&id=${clientId}&_=${Date.now()}`);
-      })
-      .then(res => res.json())
-      .then(data => {
-        // Cargar métricas básicas
-        document.getElementById('val-hoy').innerText = data.visitas_hoy;
-        document.getElementById('val-semana').innerText = data.visitas_semanal;
-        document.getElementById('val-mes').innerText = data.visitas_mes;
-        document.getElementById('val-total').innerText = data.vistas_total;
-        document.getElementById('txt-titulo').innerText = data.titulo || clientId;
-
-        if (data.elemento_visual) document.getElementById('img-globo').src = data.elemento_visual;
-
-        if (data.personalizado) {
-          if (data.personalizado.bg_color) document.getElementById('card').style.backgroundColor = data.personalizado.bg_color;
-          if (data.personalizado.text_color) document.getElementById('card').style.color = data.personalizado.text_color;
+    // Función con triple fallback para geolocalización
+    async function obtenerUbicacion() {
+      // Intento 1: ipapi.co
+      try {
+        const res = await fetch('https://ipapi.co/json/');
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        if (data.country_name) {
+          return { pais: data.country_name, codigo: data.country_code, ciudad: data.city || 'Desconocida' };
         }
+      } catch (e) {}
 
-        // Renderizar lista de países y ciudades
-        const countriesContainer = document.getElementById('countries-list');
-        countriesContainer.innerHTML = '';
+      // Intento 2: ip-api.com
+      try {
+        const res = await fetch('https://ip-api.com/json/?fields=status,country,countryCode,city');
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        if (data.status === 'success') {
+          return { pais: data.country, codigo: data.countryCode, ciudad: data.city || 'Desconocida' };
+        }
+      } catch (e) {}
 
-        if (data.paises && Object.keys(data.paises).length > 0) {
-          Object.keys(data.paises).forEach((code, idx) => {
-            const item = data.paises[code];
-            const flagUrl = code !== 'XX' ? `https://flagcdn.com/w20/${code.toLowerCase()}.png` : '';
-            
-            const row = document.createElement('div');
-            row.className = 'country-row';
-            row.innerHTML = `
-              <div class="country-info">
-                ${flagUrl ? `<img src="${flagUrl}" class="flag-icon" alt="bandera">` : ''}
-                <span>${item.nombre}</span>
-              </div>
-              <div>
-                <strong>${item.count}</strong>
-                <button class="toggle-city-btn" onclick="toggleCiudades('cities-${idx}')">▼</button>
-              </div>
-            `;
+      // Intento 3: ipwho.is
+      try {
+        const res = await fetch('https://ipwho.is/');
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        if (data.success) {
+          return { pais: data.country, codigo: data.country_code, ciudad: data.city || 'Desconocida' };
+        }
+      } catch (e) {}
 
-            // Construir lista de ciudades ocultas por defecto
-            const citiesDiv = document.createElement('div');
-            citiesDiv.id = `cities-${idx}`;
-            citiesDiv.className = 'cities-list';
+      return { pais: 'Desconocido', codigo: 'XX', ciudad: 'Desconocida' };
+    }
 
-            Object.keys(item.ciudades).forEach(cityName => {
-              const cityRow = document.createElement('div');
-              cityRow.innerText = `• ${cityName}: ${item.ciudades[cityName]}`;
-              citiesDiv.appendChild(cityRow);
+    // Carga de datos y renderizado
+    (async function CargarWidget() {
+      const geo = await obtenerUbicacion();
+      
+      const endpoint = `${APPS_SCRIPT_URL}?action=registrar&id=${clientId}&pais=${encodeURIComponent(geo.pais)}&codigo_pais=${encodeURIComponent(geo.codigo)}&ciudad=${encodeURIComponent(geo.ciudad)}&_=${Date.now()}`;
+
+      fetch(endpoint)
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('val-hoy').innerText = data.visitas_hoy;
+          document.getElementById('val-semana').innerText = data.visitas_semanal;
+          document.getElementById('val-mes').innerText = data.visitas_mes;
+          document.getElementById('val-total').innerText = data.vistas_total;
+          document.getElementById('txt-titulo').innerText = data.titulo || clientId;
+
+          if (data.elemento_visual) document.getElementById('img-globo').src = data.elemento_visual;
+
+          if (data.personalizado) {
+            if (data.personalizado.bg_color) document.getElementById('card').style.backgroundColor = data.personalizado.bg_color;
+            if (data.personalizado.text_color) document.getElementById('card').style.color = data.personalizado.text_color;
+          }
+
+          const countriesContainer = document.getElementById('countries-list');
+          countriesContainer.innerHTML = '';
+
+          if (data.paises && Object.keys(data.paises).length > 0) {
+            Object.keys(data.paises).forEach((code, idx) => {
+              const item = data.paises[code];
+              const flagUrl = code !== 'XX' ? `https://flagcdn.com/w20/${code.toLowerCase()}.png` : '';
+              
+              const row = document.createElement('div');
+              row.className = 'country-row';
+              row.innerHTML = `
+                <div class="country-info">
+                  ${flagUrl ? `<img src="${flagUrl}" class="flag-icon" alt="bandera">` : ''}
+                  <span>${item.nombre}</span>
+                </div>
+                <div>
+                  <strong>${item.count}</strong>
+                  <button class="toggle-city-btn" onclick="toggleCiudades('cities-${idx}')">▼</button>
+                </div>
+              `;
+
+              const citiesDiv = document.createElement('div');
+              citiesDiv.id = `cities-${idx}`;
+              citiesDiv.className = 'cities-list';
+
+              Object.keys(item.ciudades).forEach(cityName => {
+                const cityRow = document.createElement('div');
+                cityRow.innerText = `• ${cityName}: ${item.ciudades[cityName]}`;
+                citiesDiv.appendChild(cityRow);
+              });
+
+              countriesContainer.appendChild(row);
+              countriesContainer.appendChild(citiesDiv);
             });
-
-            countriesContainer.appendChild(row);
-            countriesContainer.appendChild(citiesDiv);
-          });
-        } else {
-          countriesContainer.innerHTML = '<div style="font-size: 10px; text-align: center; opacity: 0.6;">Sin datos de origen</div>';
-        }
-      })
-      .catch(err => console.error("Error cargando widget:", err));
+          } else {
+            countriesContainer.innerHTML = '<div style="font-size: 10px; text-align: center; opacity: 0.6;">Sin datos de origen</div>';
+          }
+        })
+        .catch(err => console.error("Error al cargar datos:", err));
+    })();
 
     function toggleCiudades(id) {
       const el = document.getElementById(id);
-      if (el.style.display === 'block') {
-        el.style.display = 'none';
-      } else {
-        el.style.display = 'block';
-      }
+      el.style.display = (el.style.display === 'block') ? 'none' : 'block';
     }
   </script>
 </body>
