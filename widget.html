@@ -82,8 +82,34 @@
     if (params.get('titulo')) document.getElementById('w-title').innerText = params.get('titulo');
     if (params.get('img')) document.getElementById('w-img').src = params.get('img');
 
-    // Obtener datos de ubicación de Vercel vía API interna
+    // Obtener ubicación precisa por GPS/Red del navegador o fallback IP
     if (banderas === 'SI') {
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            try {
+              const lat = position.coords.latitude;
+              const lon = position.coords.longitude;
+              const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+              const data = await res.json();
+              const ciudad = data.address.city || data.address.town || data.address.village || data.address.county || 'Ubicación';
+              document.getElementById('user-flag').innerText = '🇦🇷';
+              document.getElementById('user-city').innerText = `${ciudad}, AR`;
+            } catch (e) {
+              obtenerUbicacionIP();
+            }
+          },
+          () => obtenerUbicacionIP(),
+          { timeout: 4000 }
+        );
+      } else {
+        obtenerUbicacionIP();
+      }
+    } else {
+      document.getElementById('w-location').style.display = 'none';
+    }
+
+    function obtenerUbicacionIP() {
       fetch('/api/geo')
         .then(res => res.json())
         .then(data => {
@@ -93,11 +119,9 @@
         .catch(() => {
           document.getElementById('user-city').innerText = 'Localhost';
         });
-    } else {
-      document.getElementById('w-location').style.display = 'none';
     }
 
-    // Lógica del contador por ID iniciando en 1
+    // Métricas del contador por ID
     const todayStr = new Date().toISOString().slice(0, 10);
     const totalKey = `visits_total_${id}`;
     const todayKey = `visits_today_${id}_${todayStr}`;
