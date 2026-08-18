@@ -1,1 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Widget Contador</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: transparent;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    .widget-card {
+      width: 220px;
+      padding: 15px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+      background-color: #0f172a;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .widget-title {
+      font-size: 11px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .widget-img {
+      width: 50px;
+      height: 50px;
+      object-fit: contain;
+    }
+    .widget-count {
+      font-size: 26px;
+      font-weight: 800;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
 
+  <div class="widget-card" id="card">
+    <div class="widget-title" id="w-title">VISITAS GENERALES</div>
+    <img src="assets/globo.gif" alt="Icono" class="widget-img" id="w-img">
+    <div class="widget-count" id="w-count">000001</div>
+  </div>
+
+  <script>
+    // Obtener parámetros de la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get('id') || 'demo';
+
+    // Simular/Obtener contador por ID desde localStorage o servidor
+    let visits = localStorage.getItem('count_' + id) || 100;
+    visits = parseInt(visits) + 1;
+    localStorage.setItem('count_' + id, visits);
+
+    // Formatear contador a 6 dígitos con ceros a la izquierda
+    document.getElementById('w-count').innerText = String(visits).padStart(6, '0');
+  </script>
+</body>
+</html>
