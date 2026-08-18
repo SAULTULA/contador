@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel Creador de Widgets</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; padding: 25px; display: flex; gap: 30px; justify-content: center; }
+    .panel { background: white; padding: 24px; border-radius: 12px; width: 380px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
+    h2 { font-size: 18px; color: #1e293b; margin-bottom: 16px; }
+    label { display: block; margin-top: 12px; font-weight: 600; font-size: 12px; color: #475569; text-transform: uppercase; }
+    input[type="text"], select { width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
+    .color-picker { display: flex; gap: 10px; margin-top: 4px; }
+    .color-picker input { height: 38px; cursor: pointer; flex: 1; }
+    textarea { width: 100%; height: 90px; margin-top: 8px; font-family: monospace; font-size: 12px; padding: 8px; box-sizing: border-box; border: 1px solid #cbd5e1; border-radius: 6px; }
+    button { margin-top: 18px; width: 100%; padding: 12px; background: #0284c7; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    button:hover { background: #0369a1; }
+    .preview-box { background: white; padding: 24px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; text-align: center; }
+  </style>
+</head>
+<body>
+
+  <div class="panel">
+    <h2>Creador de Widgets</h2>
+    
+    <label>ID del Cliente (sin espacios):</label>
+    <input type="text" id="inp-id" value="cliente1" placeholder="ej: taller_juan">
+    
+    <label>URL de GitHub Pages del Proyecto:</label>
+    <input type="text" id="inp-gh" placeholder="https://tu-usuario.github.io/contador">
+
+    <button onclick="generarCodigo()">Generar iFrame</button>
+
+    <label>Código iFrame para el Cliente:</label>
+    <textarea id="out-code" readonly placeholder="El código aparecerá aquí..."></textarea>
+  </div>
+
+  <div class="preview-box">
+    <h2>Vista Previa</h2>
+    <div id="preview-container">
+      <p style="color:#94a3b8; font-size:13px; margin-top: 40px;">Ingresá la URL de GitHub Pages y tocá en "Generar iFrame" para previsualizar.</p>
+    </div>
+  </div>
+
+  <script>
+    function generarCodigo() {
+      const id = document.getElementById('inp-id').value.trim();
+      let ghUrl = document.getElementById('inp-gh').value.trim();
+      
+      if (!ghUrl || !id) {
+        alert("Por favor completa el ID y la URL de tu GitHub Pages");
+        return;
+      }
+
+      if (ghUrl.endsWith('/')) ghUrl = ghUrl.slice(0, -1);
+
+      const widgetUrl = `${ghUrl}/widget.html?id=${encodeURIComponent(id)}`;
+      const iframeCode = `<iframe src="${widgetUrl}" width="240" height="270" frameborder="0" scrolling="no" style="border:none; overflow:hidden;"></iframe>`;
+      
+      document.getElementById('out-code').value = iframeCode;
+      document.getElementById('preview-container').innerHTML = iframeCode;
+    }
+  </script>
+</body>
+</html>
