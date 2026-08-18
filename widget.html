@@ -1,108 +1,151 @@
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Widget Contador</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: transparent;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .widget-card {
+      width: 100%;
+      height: 100%;
+      padding: 5%; /* Padding porcentual para adaptarse al tamaño del iframe */
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      background-color: #0f172a;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+    }
+    .widget-title { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+    
+    /* MODIFICACIÓN AQUÍ: El GIF ahora escala según el tamaño del contenedor */
+    .widget-img { 
+      max-width: 25%; 
+      max-height: 25%; 
+      width: auto; 
+      height: auto; 
+      object-fit: contain; 
+    }
+    
+    .widget-count { font-size: 22px; font-weight: 800; font-family: monospace; }
+    .location-info { font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 3px; width: 100%; }
+    .flags-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; font-size: 11px; margin-top: 2px; max-height: 40px; overflow-y: auto; }
+    .flag-item { background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; display: flex; align-items: center; gap: 4px; }
+    .flag-img { width: 16px; height: 12px; object-fit: cover; border-radius: 2px; }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 10px;
+      width: 100%;
+      font-size: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 6px;
+      border-radius: 6px;
+    }
+    .stat-item { display: flex; justify-content: space-between; }
+    .stat-label { opacity: 0.7; }
+    .stat-val { font-weight: bold; }
+  </style>
+</head>
+<body>
 
-  /* El contenedor principal se adapta exactamente a la ventana del iframe */
-  html, body {
-    width: 100vw;
-    height: 100vh;
-    margin: 0;
-    padding: 0;
-    background: transparent;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-    /* Definimos el body como contenedor de referencia para escalar fuentes e imágenes */
-    container-type: inline-size; 
-  }
+  <div class="widget-card" id="card">
+    <div class="widget-title" id="w-title">VISITAS GENERALES</div>
+    <img src="assets/globo.gif" alt="Icono" class="widget-img" id="w-img">
+    <div class="widget-count" id="w-count">000000</div>
 
-  .widget-card {
-    width: 100%;
-    height: 100%;
-    padding: 4cqw; /* Espaciado dinámico basado en el ancho disponible */
-    border-radius: 12px;
-    text-align: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    background-color: #0f172a;
-    color: #ffffff;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-  }
+    <div class="location-info" id="w-location">
+      <div class="flags-list" id="flags-container">Cargando datos...</div>
+    </div>
 
-  /* Los textos escalan según el ancho real que reciba el iframe (cqw) */
-  .widget-title { 
-    font-size: clamp(9px, 4.5cqw, 14px); 
-    font-weight: bold; 
-    text-transform: uppercase; 
-    letter-spacing: 1px; 
-  }
+    <div class="stats-grid">
+      <div class="stat-item"><span class="stat-label">Hoy:</span><span class="stat-val" id="st-today">-</span></div>
+      <div class="stat-item"><span class="stat-label">Semana:</span><span class="stat-val" id="st-week">-</span></div>
+      <div class="stat-item"><span class="stat-label">Mes:</span><span class="stat-val" id="st-month">-</span></div>
+      <div class="stat-item"><span class="stat-label">Total:</span><span class="stat-val" id="st-total">-</span></div>
+    </div>
+  </div>
 
-  /* El GIF se escala de forma fluida adaptando su alto y ancho máximo */
-  .widget-img { 
-    width: auto; 
-    height: auto; 
-    max-width: 28%; 
-    max-height: 25%; 
-    object-fit: contain; 
-    flex-shrink: 1;
-  }
+  <script>
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwXNGsNRBLPxg1z2C0Ks68jfJyjGRqxp5-Y4JBdCnnbO2SkGIJamL46PFE8P75yYQwrcA/exec";
 
-  /* El contador principal cambia de tamaño automáticamente */
-  .widget-count { 
-    font-size: clamp(18px, 10cqw, 32px); 
-    font-weight: 800; 
-    font-family: monospace; 
-  }
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id') || 'demo';
 
-  .location-info { 
-    font-size: clamp(9px, 4cqw, 12px); 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    gap: 3px; 
-    width: 100%; 
-  }
+    fetch('/api/geo')
+      .then(res => res.json())
+      .then(geo => {
+        registrarEnGoogleSheets(geo.country, geo.country, geo.city);
+      })
+      .catch(() => {
+        registrarEnGoogleSheets('Argentina', 'AR', 'Desconocida');
+      });
 
-  .flags-list { 
-    display: flex; 
-    flex-wrap: wrap; 
-    justify-content: center; 
-    gap: 4px; 
-    font-size: clamp(8px, 3.8cqw, 11px); 
-    max-height: 40px; 
-    overflow-y: auto; 
-  }
+    function registrarEnGoogleSheets(pais, codigoPais, ciudad) {
+      const endpoint = `${GOOGLE_SCRIPT_URL}?action=registrar&id=${encodeURIComponent(id)}&pais=${encodeURIComponent(pais)}&codigo_pais=${encodeURIComponent(codigoPais)}&ciudad=${encodeURIComponent(ciudad)}`;
 
-  .flag-item { 
-    background: rgba(255,255,255,0.1); 
-    padding: 2px 5px; 
-    border-radius: 4px; 
-    display: flex; 
-    align-items: center; 
-    gap: 4px; 
-  }
+      fetch(endpoint)
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) return;
 
-  .flag-img { 
-    width: 14px; 
-    height: 10px; 
-    object-fit: cover; 
-    border-radius: 2px; 
-  }
+          if (data.titulo) document.getElementById('w-title').innerText = data.titulo;
+          if (data.elemento_visual) document.getElementById('w-img').src = data.elemento_visual;
 
-  .stats-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2px 8px;
-    width: 100%;
-    font-size: clamp(8px, 3.8cqw, 11px);
-    background: rgba(255, 255, 255, 0.08);
-    padding: 5px;
-    border-radius: 6px;
-  }
+          if (data.personalizado) {
+            if (data.personalizado.bg_color) document.getElementById('card').style.backgroundColor = data.personalizado.bg_color;
+            if (data.personalizado.text_color) {
+              document.getElementById('card').style.color = data.personalizado.text_color;
+              document.getElementById('w-title').style.color = data.personalizado.text_color;
+            }
+          }
 
-  .stat-item { display: flex; justify-content: space-between; }
-  .stat-label { opacity: 0.7; }
-  .stat-val { font-weight: bold; }
-</style>
+          document.getElementById('w-count').innerText = String(data.vistas_total).padStart(6, '0');
+          document.getElementById('st-today').innerText = data.visitas_hoy;
+          document.getElementById('st-week').innerText = data.visitas_semanal;
+          document.getElementById('st-month').innerText = data.visitas_mes;
+          document.getElementById('st-total').innerText = data.vistas_total;
+
+          const flagsContainer = document.getElementById('flags-container');
+          if (data.mostrar_banderas === "NO") {
+            document.getElementById('w-location').style.display = 'none';
+          } else {
+            flagsContainer.innerHTML = '';
+            
+            for (const [cod, info] of Object.entries(data.paises)) {
+              const codeLower = cod.toLowerCase();
+              const flagElement = (cod !== "XX" && cod !== "")
+                ? `<img src="https://flagcdn.com/24x18/${codeLower}.png" class="flag-img" alt="${cod}">`
+                : '🌐';
+              
+              const item = document.createElement('div');
+              item.className = 'flag-item';
+              item.title = `${info.nombre}: ${info.count} visitas`;
+              item.innerHTML = `${flagElement} <strong>${info.count}</strong>`;
+              flagsContainer.appendChild(item);
+            }
+          }
+        })
+        .catch(err => {
+          console.error("Error al conectar con la planilla:", err);
+          document.getElementById('flags-container').innerText = 'Error de conexión';
+        });
+    }
+  </script>
+</body>
+</html>
