@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  // 1. Configurar CORS
+  // Configurar cabeceras CORS para permitir peticiones desde cualquier origen
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -16,7 +16,7 @@ export default async function handler(req, res) {
 
   const { id = 'demo', action = 'registrar' } = req.query;
 
-  // 2. Extraer geolocalización desde Vercel o Headers de IP estándar
+  // Extraer geolocalización desde Vercel o Headers de IP estándar
   const codigoPais = req.headers['x-vercel-ip-country'] || req.headers['cf-ipcountry'] || 'XX';
   const ciudadRaw = req.headers['x-vercel-ip-city'] || 'Desconocida';
   const paisRaw = req.headers['x-vercel-ip-country-region'] || codigoPais;
@@ -36,7 +36,7 @@ export default async function handler(req, res) {
     pais = paisRaw;
   }
 
-  // 3. Petición a Google Apps Script (siguiendo redirecciones explícitamente)
+  // Petición a Google Apps Script siguiendo redirecciones
   try {
     const googleUrl = `${APPS_SCRIPT_URL}?action=${action}&id=${encodeURIComponent(id)}&pais=${encodeURIComponent(pais)}&codigo_pais=${encodeURIComponent(codigoPais)}&ciudad=${encodeURIComponent(ciudad)}&_=${Date.now()}`;
     
