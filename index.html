@@ -60,19 +60,18 @@
       border: 2px dashed #cbd5e1;
       border-radius: 8px;
     }
-    iframe { border: none; overflow: hidden; }
+    iframe { border: none; width: 240px; height: 270px; }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <!-- Formulario de Configuración -->
     <div class="panel">
       <h2>Creador de Widgets</h2>
       
       <div class="form-group">
         <label>ID del Cliente (Sin espacios):</label>
-        <input type="text" id="inp-id" value="cliente1" placeholder="ej: cliente1">
+        <input type="text" id="inp-id" value="cliente1">
       </div>
 
       <div class="form-group">
@@ -107,7 +106,7 @@
       </div>
 
       <div class="form-group">
-        <label>URL Base del Proyecto (Vercel o Pages):</label>
+        <label>URL Base del Proyecto:</label>
         <input type="text" id="inp-url" value="https://contador-red-delta.vercel.app">
       </div>
 
@@ -119,12 +118,9 @@
       </div>
     </div>
 
-    <!-- Previsualización -->
     <div class="preview-panel">
       <h2 style="text-align: center;">Vista Previa</h2>
-      <div class="preview-container" id="preview-box">
-        <!-- El iFrame se inserta acá -->
-      </div>
+      <div class="preview-container" id="preview-box"></div>
     </div>
   </div>
 
@@ -133,27 +129,16 @@
       const id = document.getElementById('inp-id').value.trim() || 'demo';
       let baseUrl = document.getElementById('inp-url').value.trim();
       
-      if (baseUrl.endsWith('/')) {
-        baseUrl = baseUrl.slice(0, -1);
-      }
+      if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1);
 
-      const timestamp = Date.now();
-      const iframeSrc = `${baseUrl}/widget.html?id=${encodeURIComponent(id)}&t=${timestamp}`;
+      const iframeSrc = `${baseUrl}/widget.html?id=${encodeURIComponent(id)}&t=${Date.now()}`;
+      const iframeHtml = `<iframe src="${iframeSrc}" width="240" height="270" frameborder="0" scrolling="no"></iframe>`;
       
-      const iframeHtml = `<iframe src="${iframeSrc}" width="240" height="270" frameborder="0" scrolling="no" style="border:none; overflow:hidden;"></iframe>`;
-      
-      // Actualizar textarea con el código del iframe
       document.getElementById('inp-code').value = iframeHtml;
-
-      // Inyectar en la vista previa
-      const previewBox = document.getElementById('preview-box');
-      previewBox.innerHTML = iframeHtml;
+      document.getElementById('preview-box').innerHTML = iframeHtml;
     }
 
-    // Cargar la vista previa automáticamente al abrir la página
-    window.onload = function() {
-      generarIframe();
-    };
+    window.onload = generarIframe;
   </script>
 </body>
 </html>
