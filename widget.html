@@ -123,7 +123,7 @@
     
     <!-- Contenedor Geográfico -->
     <div class="countries-section" id="countries-list">
-      <div style="font-size: 10px; text-align: center; opacity: 0.6;">Obteniendo ubicación...</div>
+      <div style="font-size: 10px; text-align: center; opacity: 0.6;">Cargando ubicaciones...</div>
     </div>
 
     <!-- Bloque de Métricas Generales -->
@@ -152,108 +152,67 @@
   </div>
 
   <script>
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyVvN3AlbRYguoTGWbyvUok7Ig9NQoxbIvVYHogMPcTo-0z2--Qlc1zkEnO-xHVongA/exec";
-
     const params = new URLSearchParams(window.location.search);
     const clientId = params.get('id') || 'demo';
 
-    // Función con triple fallback para geolocalización
-    async function obtenerUbicacion() {
-      // Intento 1: ipapi.co
-      try {
-        const res = await fetch('https://ipapi.co/json/');
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        if (data.country_name) {
-          return { pais: data.country_name, codigo: data.country_code, ciudad: data.city || 'Desconocida' };
+    // Usamos la API relativa de Vercel directamente
+    const endpoint = `/api/contador?action=registrar&id=${clientId}&_=${Date.now()}`;
+
+    fetch(endpoint)
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('val-hoy').innerText = data.visitas_hoy;
+        document.getElementById('val-semana').innerText = data.visitas_semanal;
+        document.getElementById('val-mes').innerText = data.visitas_mes;
+        document.getElementById('val-total').innerText = data.vistas_total;
+        document.getElementById('txt-titulo').innerText = data.titulo || clientId;
+
+        if (data.elemento_visual) document.getElementById('img-globo').src = data.elemento_visual;
+
+        if (data.personalizado) {
+          if (data.personalizado.bg_color) document.getElementById('card').style.backgroundColor = data.personalizado.bg_color;
+          if (data.personalizado.text_color) document.getElementById('card').style.color = data.personalizado.text_color;
         }
-      } catch (e) {}
 
-      // Intento 2: ip-api.com
-      try {
-        const res = await fetch('https://ip-api.com/json/?fields=status,country,countryCode,city');
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        if (data.status === 'success') {
-          return { pais: data.country, codigo: data.countryCode, ciudad: data.city || 'Desconocida' };
-        }
-      } catch (e) {}
+        const countriesContainer = document.getElementById('countries-list');
+        countriesContainer.innerHTML = '';
 
-      // Intento 3: ipwho.is
-      try {
-        const res = await fetch('https://ipwho.is/');
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        if (data.success) {
-          return { pais: data.country, codigo: data.country_code, ciudad: data.city || 'Desconocida' };
-        }
-      } catch (e) {}
+        if (data.paises && Object.keys(data.paises).length > 0) {
+          Object.keys(data.paises).forEach((code, idx) => {
+            const item = data.paises[code];
+            const flagUrl = code !== 'XX' ? `https://flagcdn.com/w20/${code.toLowerCase()}.png` : '';
+            
+            const row = document.createElement('div');
+            row.className = 'country-row';
+            row.innerHTML = `
+              <div class="country-info">
+                ${flagUrl ? `<img src="${flagUrl}" class="flag-icon" alt="bandera">` : ''}
+                <span>${item.nombre}</span>
+              </div>
+              <div>
+                <strong>${item.count}</strong>
+                <button class="toggle-city-btn" onclick="toggleCiudades('cities-${idx}')">▼</button>
+              </div>
+            `;
 
-      return { pais: 'Desconocido', codigo: 'XX', ciudad: 'Desconocida' };
-    }
+            const citiesDiv = document.createElement('div');
+            citiesDiv.id = `cities-${idx}`;
+            citiesDiv.className = 'cities-list';
 
-    // Carga de datos y renderizado
-    (async function CargarWidget() {
-      const geo = await obtenerUbicacion();
-      
-      const endpoint = `${APPS_SCRIPT_URL}?action=registrar&id=${clientId}&pais=${encodeURIComponent(geo.pais)}&codigo_pais=${encodeURIComponent(geo.codigo)}&ciudad=${encodeURIComponent(geo.ciudad)}&_=${Date.now()}`;
-
-      fetch(endpoint)
-        .then(res => res.json())
-        .then(data => {
-          document.getElementById('val-hoy').innerText = data.visitas_hoy;
-          document.getElementById('val-semana').innerText = data.visitas_semanal;
-          document.getElementById('val-mes').innerText = data.visitas_mes;
-          document.getElementById('val-total').innerText = data.vistas_total;
-          document.getElementById('txt-titulo').innerText = data.titulo || clientId;
-
-          if (data.elemento_visual) document.getElementById('img-globo').src = data.elemento_visual;
-
-          if (data.personalizado) {
-            if (data.personalizado.bg_color) document.getElementById('card').style.backgroundColor = data.personalizado.bg_color;
-            if (data.personalizado.text_color) document.getElementById('card').style.color = data.personalizado.text_color;
-          }
-
-          const countriesContainer = document.getElementById('countries-list');
-          countriesContainer.innerHTML = '';
-
-          if (data.paises && Object.keys(data.paises).length > 0) {
-            Object.keys(data.paises).forEach((code, idx) => {
-              const item = data.paises[code];
-              const flagUrl = code !== 'XX' ? `https://flagcdn.com/w20/${code.toLowerCase()}.png` : '';
-              
-              const row = document.createElement('div');
-              row.className = 'country-row';
-              row.innerHTML = `
-                <div class="country-info">
-                  ${flagUrl ? `<img src="${flagUrl}" class="flag-icon" alt="bandera">` : ''}
-                  <span>${item.nombre}</span>
-                </div>
-                <div>
-                  <strong>${item.count}</strong>
-                  <button class="toggle-city-btn" onclick="toggleCiudades('cities-${idx}')">▼</button>
-                </div>
-              `;
-
-              const citiesDiv = document.createElement('div');
-              citiesDiv.id = `cities-${idx}`;
-              citiesDiv.className = 'cities-list';
-
-              Object.keys(item.ciudades).forEach(cityName => {
-                const cityRow = document.createElement('div');
-                cityRow.innerText = `• ${cityName}: ${item.ciudades[cityName]}`;
-                citiesDiv.appendChild(cityRow);
-              });
-
-              countriesContainer.appendChild(row);
-              countriesContainer.appendChild(citiesDiv);
+            Object.keys(item.ciudades).forEach(cityName => {
+              const cityRow = document.createElement('div');
+              cityRow.innerText = `• ${cityName}: ${item.ciudades[cityName]}`;
+              citiesDiv.appendChild(cityRow);
             });
-          } else {
-            countriesContainer.innerHTML = '<div style="font-size: 10px; text-align: center; opacity: 0.6;">Sin datos de origen</div>';
-          }
-        })
-        .catch(err => console.error("Error al cargar datos:", err));
-    })();
+
+            countriesContainer.appendChild(row);
+            countriesContainer.appendChild(citiesDiv);
+          });
+        } else {
+          countriesContainer.innerHTML = '<div style="font-size: 10px; text-align: center; opacity: 0.6;">Sin datos de origen</div>';
+        }
+      })
+      .catch(err => console.error("Error al cargar datos:", err));
 
     function toggleCiudades(id) {
       const el = document.getElementById(id);
