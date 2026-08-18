@@ -31,7 +31,9 @@
     .widget-title { font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
     .widget-img { width: 45px; height: 45px; object-fit: contain; }
     .widget-count { font-size: 24px; font-weight: 800; font-family: monospace; }
-    .location-info { font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 5px; }
+    .location-info { font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 3px; width: 100%; }
+    .flags-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; font-size: 11px; margin-top: 4px; max-height: 40px; overflow-y: auto; }
+    .flag-item { background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; display: flex; align-items: center; gap: 3px; }
     .stats-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -53,90 +55,82 @@
   <div class="widget-card" id="card">
     <div class="widget-title" id="w-title">VISITAS GENERALES</div>
     <img src="assets/globo.gif" alt="Icono" class="widget-img" id="w-img">
-    <div class="widget-count" id="w-count">000001</div>
+    <div class="widget-count" id="w-count">000000</div>
 
     <div class="location-info" id="w-location">
-      <span id="user-flag">🌐</span>
-      <span id="user-city">Cargando...</span>
+      <div class="flags-list" id="flags-container">Cargando datos...</div>
     </div>
 
     <div class="stats-grid">
-      <div class="stat-item"><span class="stat-label">Hoy:</span><span class="stat-val" id="st-today">1</span></div>
-      <div class="stat-item"><span class="stat-label">Semana:</span><span class="stat-val" id="st-week">1</span></div>
-      <div class="stat-item"><span class="stat-label">Mes:</span><span class="stat-val" id="st-month">1</span></div>
-      <div class="stat-item"><span class="stat-label">Total:</span><span class="stat-val" id="st-total">1</span></div>
+      <div class="stat-item"><span class="stat-label">Hoy:</span><span class="stat-val" id="st-today">-</span></div>
+      <div class="stat-item"><span class="stat-label">Semana:</span><span class="stat-val" id="st-week">-</span></div>
+      <div class="stat-item"><span class="stat-label">Mes:</span><span class="stat-val" id="st-month">-</span></div>
+      <div class="stat-item"><span class="stat-label">Total:</span><span class="stat-val" id="st-total">-</span></div>
     </div>
   </div>
 
   <script>
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwXNGsNRBLPxg1z2C0Ks68jfJyjGRqxp5-Y4JBdCnnbO2SkGIJamL46PFE8P75yYQwrcA/exec";
+
     const params = new URLSearchParams(window.location.search);
-    
     const id = params.get('id') || 'demo';
-    const bg = params.get('bg') || '#0f172a';
-    const text = params.get('text') || '#ffffff';
-    const banderas = params.get('banderas') || 'SI';
 
-    document.getElementById('card').style.backgroundColor = bg;
-    document.getElementById('card').style.color = text;
-    document.getElementById('w-title').style.color = text;
-    if (params.get('titulo')) document.getElementById('w-title').innerText = params.get('titulo');
-    if (params.get('img')) document.getElementById('w-img').src = params.get('img');
+    fetch('/api/geo')
+      .then(res => res.json())
+      .then(geo => {
+        registrarEnGoogleSheets(geo.country, geo.country, geo.city);
+      })
+      .catch(() => {
+        registrarEnGoogleSheets('Argentina', 'AR', 'Desconocida');
+      });
 
-    // Obtener ubicación precisa por GPS/Red del navegador o fallback IP
-    if (banderas === 'SI') {
-      if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          async (position) => {
-            try {
-              const lat = position.coords.latitude;
-              const lon = position.coords.longitude;
-              const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
-              const data = await res.json();
-              const ciudad = data.address.city || data.address.town || data.address.village || data.address.county || 'Ubicación';
-              document.getElementById('user-flag').innerText = '🇦🇷';
-              document.getElementById('user-city').innerText = `${ciudad}, AR`;
-            } catch (e) {
-              obtenerUbicacionIP();
-            }
-          },
-          () => obtenerUbicacionIP(),
-          { timeout: 4000 }
-        );
-      } else {
-        obtenerUbicacionIP();
-      }
-    } else {
-      document.getElementById('w-location').style.display = 'none';
-    }
+    function registrarEnGoogleSheets(pais, codigoPais, ciudad) {
+      const endpoint = `${GOOGLE_SCRIPT_URL}?action=registrar&id=${encodeURIComponent(id)}&pais=${encodeURIComponent(pais)}&codigo_pais=${encodeURIComponent(codigoPais)}&ciudad=${encodeURIComponent(ciudad)}`;
 
-    function obtenerUbicacionIP() {
-      fetch('/api/geo')
+      fetch(endpoint)
         .then(res => res.json())
         .then(data => {
-          document.getElementById('user-flag').innerText = data.flag;
-          document.getElementById('user-city').innerText = `${data.city}, ${data.country}`;
+          if (data.error) return;
+
+          if (data.titulo) document.getElementById('w-title').innerText = data.titulo;
+          if (data.elemento_visual) document.getElementById('w-img').src = data.elemento_visual;
+
+          if (data.personalizado) {
+            if (data.personalizado.bg_color) document.getElementById('card').style.backgroundColor = data.personalizado.bg_color;
+            if (data.personalizado.text_color) {
+              document.getElementById('card').style.color = data.personalizado.text_color;
+              document.getElementById('w-title').style.color = data.personalizado.text_color;
+            }
+          }
+
+          document.getElementById('w-count').innerText = String(data.vistas_total).padStart(6, '0');
+          document.getElementById('st-today').innerText = data.visitas_hoy;
+          document.getElementById('st-week').innerText = data.visitas_semanal;
+          document.getElementById('st-month').innerText = data.visitas_mes;
+          document.getElementById('st-total').innerText = data.vistas_total;
+
+          const flagsContainer = document.getElementById('flags-container');
+          if (data.mostrar_banderas === "NO") {
+            document.getElementById('w-location').style.display = 'none';
+          } else {
+            flagsContainer.innerHTML = '';
+            
+            for (const [cod, info] of Object.entries(data.paises)) {
+              const flagEmoji = cod !== "XX" ? cod.toUpperCase().replace(/./g, char => String.fromCodePoint(127397 + char.charCodeAt())) : '🌐';
+              
+              const item = document.createElement('div');
+              item.className = 'flag-item';
+              item.title = `${info.nombre}: ${info.count} visitas`;
+              item.innerHTML = `<span>${flagEmoji}</span> <strong>${info.count}</strong>`;
+              flagsContainer.appendChild(item);
+            }
+          }
         })
-        .catch(() => {
-          document.getElementById('user-city').innerText = 'Localhost';
+        .catch(err => {
+          console.error("Error al conectar con la planilla:", err);
+          document.getElementById('flags-container').innerText = 'Error de conexión';
         });
     }
-
-    // Métricas del contador por ID
-    const todayStr = new Date().toISOString().slice(0, 10);
-    const totalKey = `visits_total_${id}`;
-    const todayKey = `visits_today_${id}_${todayStr}`;
-
-    let total = parseInt(localStorage.getItem(totalKey) || '0') + 1;
-    let today = parseInt(localStorage.getItem(todayKey) || '0') + 1;
-
-    localStorage.setItem(totalKey, total);
-    localStorage.setItem(todayKey, today);
-
-    document.getElementById('w-count').innerText = String(total).padStart(6, '0');
-    document.getElementById('st-today').innerText = today;
-    document.getElementById('st-week').innerText = today;
-    document.getElementById('st-month').innerText = today;
-    document.getElementById('st-total').innerText = total;
   </script>
 </body>
 </html>
