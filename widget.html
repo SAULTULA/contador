@@ -44,6 +44,12 @@
       font-weight: 800;
       font-family: monospace;
     }
+    .flags-container {
+      display: flex;
+      gap: 5px;
+      margin-top: 5px;
+      font-size: 12px;
+    }
   </style>
 </head>
 <body>
@@ -51,20 +57,35 @@
   <div class="widget-card" id="card">
     <div class="widget-title" id="w-title">VISITAS GENERALES</div>
     <img src="assets/globo.gif" alt="Icono" class="widget-img" id="w-img">
-    <div class="widget-count" id="w-count">000001</div>
+    <div class="widget-count" id="w-count">000102</div>
+    <div class="flags-container" id="w-flags" style="display: none;">
+      <span>🇦🇷 12</span> <span>🇧🇷 5</span> <span>🇪🇸 3</span>
+    </div>
   </div>
 
   <script>
-    // Obtener parámetros de la URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const id = urlParams.get('id') || 'demo';
+    const params = new URLSearchParams(window.location.search);
+    
+    // Captura de parámetros recibidos
+    const id = params.get('id') || 'demo';
+    const titulo = params.get('titulo') || 'VISITAS GENERALES';
+    const img = params.get('img') || 'assets/globo.gif';
+    const bg = params.get('bg') || '#0f172a';
+    const text = params.get('text') || '#ffffff';
+    const banderas = params.get('banderas') || 'SI';
 
-    // Simular/Obtener contador por ID desde localStorage o servidor
-    let visits = localStorage.getItem('count_' + id) || 100;
-    visits = parseInt(visits) + 1;
-    localStorage.setItem('count_' + id, visits);
+    // Aplicar personalización
+    const card = document.getElementById('card');
+    card.style.backgroundColor = bg;
+    card.style.color = text;
+    
+    document.getElementById('w-title').innerText = titulo;
+    document.getElementById('w-title').style.color = text;
+    document.getElementById('w-img').src = img;
+    document.getElementById('w-flags').style.display = (banderas === 'SI') ? 'flex' : 'none';
 
-    // Formatear contador a 6 dígitos con ceros a la izquierda
+    // Manejo de visitas
+    let visits = localStorage.getItem('count_' + id) || 102;
     document.getElementById('w-count').innerText = String(visits).padStart(6, '0');
   </script>
 </body>
