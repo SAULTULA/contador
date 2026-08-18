@@ -8,11 +8,5 @@
         { "key": "Content-Security-Policy", "value": "frame-ancestors *" }
       ]
     }
-  ],
-  "rewrites": [
-    {
-      "source": "/widget.html",
-      "destination": "/widget.html?country=:x-vercel-ip-country&city=:x-vercel-ip-city"
-    }
   ]
 }
